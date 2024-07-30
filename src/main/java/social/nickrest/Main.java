@@ -46,6 +46,11 @@ public class Main {
                     String globalName = object.get("globalName").getAsString();
                     String id = object.get("id").getAsString();
 
+                    JsonObject session = object.has("session") ? object.get("session").getAsJsonObject() : new JsonObject();
+                    if(!session.isEmpty()) {
+                        object.add("session", session);
+                    }
+
                     logger.info("User logged in as {} ({}) with ID {}", globalName, username, id);
                     data.set(object);
                     return true;
@@ -53,6 +58,50 @@ public class Main {
 
                 logger.info("Client tried to authenticate without the correct arguments");
                 return false;
+            });
+
+            connection.on("disconnect", (json) -> {
+                if(!data.get().isEmpty()) {
+                    logger.info("User {} ({}) disconnected", data.get().get("globalName"), data.get().get("username"));
+                    return true;
+                }
+
+                logger.info("User disconnected without authenticating");
+                return true;
+            });
+
+            connection.on("newSession", (json) -> {
+                Object[] arguments = connection.getArguments(json);
+
+                if(arguments.length == 0) {
+                    logger.info("Client attempted to create a new session without any arguments");
+                }
+
+                String jsonString = arguments[0].toString();
+
+                logger.info("new session created");
+                if(!jsonString.startsWith("{") && !jsonString.endsWith("}")) {
+                    connection.emit("error", "Invalid JSON object");
+                    return false;
+                }
+
+                JsonObject object = new Gson().fromJson(jsonString, JsonObject.class);
+
+                if(object.has("username") && object.has("uuid")) {
+                    String username = object.get("username").getAsString();
+                    String uuid = object.get("uuid").getAsString();
+
+                    logger.info("User created a new session as {} with UUID {}", username, uuid);
+
+                    if(data.get().has("session")) {
+                        data.get().remove("session");
+                    }
+
+                    data.get().add("session", object);
+                    return true;
+                }
+
+                return true;
             });
 
             connection.on("irc", (json) -> {

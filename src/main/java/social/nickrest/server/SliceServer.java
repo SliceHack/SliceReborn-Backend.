@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
@@ -55,14 +56,7 @@ public class SliceServer {
     private Connection getConnection(Socket socket) throws IOException {
         Connection connection = new Connection(this, socket, socket.getInputStream(), socket.getOutputStream(), connections.size() + 1);
 
-        connection.on("connect", (json) -> {
-            logger.info("Connection established with client #{}", connection.getId());
-            return false;
-        });
-
         connection.on("disconnect", (json) -> {
-            logger.info("Connection closed with client #{}", connection.getId());
-
             try {
                 if (!socket.isClosed()) {
                     socket.close();
@@ -81,10 +75,10 @@ public class SliceServer {
     }
 
     public void emit(String message) {
-        connections.forEach(connection -> connection.emit(message));
+        connections.stream().filter(Objects::nonNull).forEach(connection -> connection.emit(message));
     }
 
     public void emit(String message, Object... args) {
-        connections.forEach(connection -> connection.emit(message, args));
+        connections.stream().filter(Objects::nonNull).forEach(connection -> connection.emit(message, args));
     }
 }
