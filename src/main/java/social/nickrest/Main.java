@@ -125,7 +125,11 @@ public class Main {
                     return false;
                 }
 
-                logger.info("{} ({}:{}): {}", dataObject.get("globalName"), dataObject.get("username").getAsString(), dataObject.get("id").getAsLong(), message);
+                if(!dataObject.has("globalName") || !dataObject.has("username") || !dataObject.has("id")) {
+                    connection.emit("error", "You must authenticate before sending messages");
+                    return false;
+                }
+
                 server.emit("irc", dataObject, message);
                 return true;
             });

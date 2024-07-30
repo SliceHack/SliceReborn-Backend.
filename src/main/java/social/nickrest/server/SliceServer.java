@@ -31,8 +31,13 @@ public class SliceServer {
     @NonNull
     private int port;
 
+    private boolean open;
+
     public void open() {
+        if(open) return;
+
         try {
+            open = true;
             serverSocket = new ServerSocket(port);
 
             SliceServer.getLogger().info("Server started on port {}", port);

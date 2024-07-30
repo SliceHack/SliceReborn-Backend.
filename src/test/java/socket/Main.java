@@ -3,7 +3,7 @@ package socket;
 public class Main {
 
     public static void main(String[] args) {
-        SocketConnection connection = new SocketConnection("localhost", 8080);
+        SocketConnection connection = new SocketConnection("45.55.44.32", 80);
 
         connection.on("connected", (json) -> {
             connection.emit("hi", "Hello from client!");
