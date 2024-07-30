@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @RequiredArgsConstructor
 @Getter
@@ -22,6 +23,7 @@ public class SliceServer {
     private final Gson gson = new Gson();
 
     private final List<Connection> connections = new ArrayList<>();
+    private final List<Function<Connection, Boolean>> connectionListeners = new ArrayList<>();
 
     private ServerSocket serverSocket;
 
@@ -44,6 +46,10 @@ public class SliceServer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void onConnection(Function<Connection, Boolean> function) {
+        connectionListeners.add(function);
     }
 
     private Connection getConnection(Socket socket) throws IOException {
@@ -70,19 +76,7 @@ public class SliceServer {
             return false;
         });
 
-
-
-//        connection.on("hi", (json) -> {
-//            Object[] arguments = connection.getArguments(json);
-//
-//            for (Object argument : arguments) {
-//                logger.info("Client #{} says: {}", connection.getId(), argument);
-//            }
-//
-//            connection.emit("hi", "Hello from server!");
-//            return false;
-//        });
-
+        connectionListeners.forEach(listener -> listener.apply(connection));
         return connection;
     }
 

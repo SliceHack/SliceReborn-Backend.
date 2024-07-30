@@ -23,7 +23,9 @@ public class Main {
             }
         }
 
-        new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080).open();
+        SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
+
+        server.open();
     }
 
     public Map<String, String> getArgumentMap(String[] args) {
