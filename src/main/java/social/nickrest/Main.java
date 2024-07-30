@@ -2,15 +2,22 @@ package social.nickrest;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import social.nickrest.input.CommandManager;
 import social.nickrest.server.SliceServer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
+
+    @Getter
+    private static final List<JsonObject> users = new ArrayList<>();
 
     private static final Logger logger = LogManager.getLogger(Main.class);
 
@@ -26,6 +33,7 @@ public class Main {
             }
         }
 
+        new CommandManager(); // this will register console input and all the commands
         SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
 
         server.onConnection((connection) -> {
@@ -53,6 +61,7 @@ public class Main {
 
                     logger.info("User logged in as {} ({}) with ID {}", globalName, username, id);
                     data.set(object);
+                    users.add(object);
                     return true;
                 }
 
@@ -63,6 +72,7 @@ public class Main {
             connection.on("disconnect", (json) -> {
                 if(!data.get().isEmpty()) {
                     logger.info("User {} ({}) disconnected", data.get().get("globalName"), data.get().get("username"));
+                    users.remove(data.get());
                     return true;
                 }
 

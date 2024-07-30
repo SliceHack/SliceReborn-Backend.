@@ -15,9 +15,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-@RequiredArgsConstructor
 @Getter
 public class SliceServer {
+
+    @Getter
+    private static SliceServer instance;
 
     @Getter
     private static final Logger logger = LogManager.getLogger(SliceServer.class);
@@ -28,16 +30,19 @@ public class SliceServer {
 
     private ServerSocket serverSocket;
 
-    @NonNull
-    private int port;
+    private final int port;
 
-    private boolean open;
+    public SliceServer(int port) {
+        if(instance != null) {
+            throw new IllegalStateException("Server already exists");
+        }
+
+        instance = this;
+        this.port = port;
+    }
 
     public void open() {
-        if(open) return;
-
         try {
-            open = true;
             serverSocket = new ServerSocket(port);
 
             SliceServer.getLogger().info("Server started on port {}", port);
