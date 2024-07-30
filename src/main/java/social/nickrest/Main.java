@@ -130,6 +130,7 @@ public class Main {
                     return false;
                 }
 
+                logger.info("User {} ({}): {}", dataObject.get("globalName"), dataObject.get("username"), message);
                 server.emit("irc", dataObject, message);
                 return true;
             });
