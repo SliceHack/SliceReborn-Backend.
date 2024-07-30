@@ -1,11 +1,14 @@
 package social.nickrest;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import social.nickrest.server.SliceServer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
 
@@ -24,6 +27,62 @@ public class Main {
         }
 
         SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
+
+        server.onConnection((connection) -> {
+            AtomicReference<JsonObject> data = new AtomicReference<>(new JsonObject());
+
+            connection.on("authenticate", (json) -> {
+                Object[] arguments = connection.getArguments(json);
+
+                if(arguments.length == 0) {
+                    logger.info("Client tried to authenticate without any arguments");
+                    return false;
+                }
+
+                JsonObject object = new Gson().fromJson(arguments[0].toString(), JsonObject.class);
+
+                if(object.has("username") && object.has("globalName") && object.has("id")) {
+                    String username = object.get("username").getAsString();
+                    String globalName = object.get("globalName").getAsString();
+                    String id = object.get("id").getAsString();
+
+                    logger.info("User logged in as {} ({}) with ID {}", globalName, username, id);
+                    data.set(object);
+                    return true;
+                }
+
+                logger.info("Client tried to authenticate without the correct arguments");
+                return false;
+            });
+
+            connection.on("irc", (json) -> {
+                Object[] arguments = connection.getArguments(json);
+                JsonObject dataObject = data.get();
+
+                if(dataObject.isEmpty()) {
+                    connection.emit("error", "You must authenticate before sending messages");
+                    return false;
+                }
+
+                if(arguments.length == 0) {
+                    logger.info("Client tried to send an empty message");
+                    return false;
+                }
+
+                String message = arguments[0].toString().trim();
+
+                if(message.isEmpty()) {
+                    connection.emit("error", "please just provide good message :(");
+                    return false;
+                }
+
+                logger.info("{} ({}:{}): {}", dataObject.get("globalName"), dataObject.get("username").getAsString(), dataObject.get("id").getAsLong(), message);
+                server.emit("irc", dataObject, message);
+                return true;
+            });
+
+            return true;
+        });
 
         server.open();
     }
