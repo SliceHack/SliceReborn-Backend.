@@ -11,7 +11,7 @@ import java.util.List;
 
 public  class HTTPResponseBuilder {
 
-    private HTTPResponse build;
+    private final HTTPResponse build = new HTTPResponse();
 
     public HTTPResponseBuilder type(String type) {
         build.setType(type);

@@ -45,10 +45,22 @@ public class Main {
                 .body(new File("client.jar"))
                 .build());
 
+        server.get("/libraries/libraries.zip", (request) -> HTTPResponse.builder()
+                .status(200)
+                .type("application/zip")
+                .body(new File("libraries.zip"))
+                .build());
+
         server.get("/", (request) -> HTTPResponse.builder()
                 .status(200)
                 .type("text/html")
                 .body("<h1>Yes, this is the web api now just move along and pretend like you didn't see anything</h1>".getBytes())
+                .build());
+
+        server.post("/api", (request) -> HTTPResponse.builder()
+                .status(200)
+                .type("application/json")
+                .body("{\"message\": \"Hello, World!\"}".getBytes())
                 .build());
 
         server.onConnection((connection) -> {
