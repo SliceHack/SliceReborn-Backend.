@@ -60,7 +60,7 @@ public class Main {
         server.post("/api", (request) -> HTTPResponse.builder()
                 .status(200)
                 .type("application/json")
-                .body("{\"message\": \"Hello, World!\"}".getBytes())
+                .body("{\"message\": \"I wonder if I'll ever use this part of the sever 🤔\"}".getBytes())
                 .build());
 
         server.onConnection((connection) -> {
