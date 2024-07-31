@@ -8,7 +8,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import social.nickrest.input.CommandManager;
 import social.nickrest.server.SliceServer;
+import social.nickrest.server.pathed.HTTPResponse;
+import social.nickrest.util.FileUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +39,14 @@ public class Main {
 
         new CommandManager(); // this will register console input and all the commands
         SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
+
+        // this will be done later but for now it just will return 404
+        server.get("/client.jar", (request) -> {
+            return HTTPResponse.create()
+                    .status(200)
+                    .body(new File("client.jar"))
+                    .build();
+        });
 
         server.onConnection((connection) -> {
             AtomicReference<JsonObject> data = new AtomicReference<>(new JsonObject());

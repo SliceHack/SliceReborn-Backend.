@@ -3,13 +3,14 @@ package social.nickrest.server;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import social.nickrest.server.pathed.HTTPStatus;
+import social.nickrest.server.pathed.HTTPRequest;
+import social.nickrest.server.pathed.HTTPResponse;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ import java.util.function.Function;
 public class Connection implements Runnable {
 
     private final HashMap<String, List<Function<JsonObject, Boolean>>> params = new HashMap<>();
+
 
     private final SliceServer parent;
     private final Socket connectedSocket;
@@ -75,6 +77,10 @@ public class Connection implements Runnable {
 
     public void send(JsonObject object) {
         try {
+            if(connectedSocket.isClosed()) {
+                return;
+            }
+
             outputStream.write(object.toString().getBytes());
         } catch (Exception e) {
             SliceServer.getLogger().error("Failed to send data to client", e);
@@ -88,24 +94,86 @@ public class Connection implements Runnable {
 
         call("connect", connect);
         while (connectedSocket.isConnected()) {
+
             try {
                 byte[] buffer = new byte[1024];
+
                 try {
+                    boolean browserLikeRequest = false;
                     int read = inputStream.read(buffer);
 
-                    if (read == -1) {
-                        JsonObject object = new JsonObject();
-                        object.addProperty("message", "Connection closed by peer");
-                        object.add("data", new JsonObject());
+                    outputStream.write("HTTP/1.1 200 OK\\nContent-Type: text/html; charset=UTF-8".getBytes());
+                    outputStream.write("<html><body><h1>200 OK</h1></body></html>".getBytes());
+                    String message = new String(buffer, 0, read);
+                    String[] requestTypes = new String[]{
+                            "GET", "POST",
+                            "PUT", "DELETE",
+                            "PATCH", "HEAD",
+                            "OPTIONS", "CONNECT",
+                            "TRACE"
+                    };
 
-                        call("disconnect", object);
-                        break;
+                    if (Arrays.stream(requestTypes).anyMatch(message::startsWith)) {
+                        browserLikeRequest = true;
+
+                        String header = message.split("\n")[0];
+                        boolean isRoot = header.split(" ").length == 2;
+
+                        String path = isRoot ? "/" : header.split(" ")[1];
+                        String type = header.split(" ")[0];
+
+                        HTTPRequest request = getHttpRequest(message, path);
+
+                        HTTPResponse response = switch (type) {
+                            case "GET" -> SliceServer.getInstance().get(path);
+                            case "POST" -> SliceServer.getInstance().post(path);
+                            case "PUT" -> SliceServer.getInstance().put(path);
+                            case "DELETE" -> SliceServer.getInstance().delete(path);
+                            default -> null;
+                        };
+
+                        if(response == null) {
+                            outputStream.write("Content-Type: text/html; charset=UTF-8\n".getBytes());
+                            outputStream.write("\n".getBytes());
+                            outputStream.write("<html><body><h1>404 Not Found</h1></body></html>".getBytes());
+                            outputStream.flush();
+                            outputStream.close();
+                            return;
+                        }
+
+                        int statusCode = response.getStatusCode();
+                        HTTPStatus statusType = HTTPStatus.fromCode(statusCode);
+
+                        outputStream.write(("HTTP/1.1 " + statusCode + " " + statusType + "\n").getBytes());
+                        if(response.isJson()) {
+                            outputStream.write("Content-Type: application/json\n".getBytes());
+                        } else if (path.endsWith(".css")) {
+                            outputStream.write("Content-Type: text/css; charset=UTF-8\n".getBytes());
+                        } else if(path.endsWith(".js")) {
+                            outputStream.write("Content-Type: text/javascript; charset=UTF-8\n".getBytes());
+                        } else if(path.endsWith(".png")) {
+                            outputStream.write("Content-Type: image/png\n".getBytes());
+                        } else if(path.endsWith(".jpg") || path.endsWith(".jpeg")) {
+                            outputStream.write("Content-Type: image/jpeg\n".getBytes());
+                        } else if(path.endsWith(".gif")) {
+                            outputStream.write("Content-Type: image/gif\n".getBytes());
+                        } else if(path.endsWith(".html") || !path.contains(".")) {
+                            outputStream.write("Content-Type: text/html; charset=UTF-8\n".getBytes());
+                        } else {
+                            outputStream.write("Content-Type: application/octet-stream\n".getBytes());
+                        }
+
+                        outputStream.write("\n".getBytes());
+                        outputStream.write(response.getReturnBody());
+                        outputStream.flush();
+                        outputStream.close(); // so the client knows we're done
+                        continue;
                     }
 
-                    // check if it's a valid json object
-                    String jsonFormatted = new String(buffer, 0, read);
-                    if (!jsonFormatted.startsWith("{") || !jsonFormatted.endsWith("}")) {
-                        SliceServer.getLogger().warn("Received invalid message from client: {}", jsonFormatted);
+                    if(browserLikeRequest) continue;
+
+                    if (!message.startsWith("{") || !message.endsWith("}")) {
+                        SliceServer.getLogger().warn("Received invalid message from client: {}", message);
                         continue;
                     }
 
@@ -137,6 +205,18 @@ public class Connection implements Runnable {
         }
 
         parent.getConnections().remove(this);
+    }
+
+    private HTTPRequest getHttpRequest(String message, String path) {
+        Map<String, String> headers = new HashMap<>();
+        for (String line : message.split("\n")) {
+            if (line.contains(":")) {
+                String key = line.split(":")[0];
+                String value = line.split(":")[1];
+                headers.put(key, value);
+            }
+        }
+        return new HTTPRequest(path, message, headers, inputStream, outputStream);
     }
 
     public Object[] getArguments(JsonObject object) {

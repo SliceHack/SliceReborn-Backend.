@@ -6,13 +6,16 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import social.nickrest.server.pathed.HTTPRequest;
+import social.nickrest.server.pathed.HTTPResponse;
+import social.nickrest.server.pathed.RequestType;
+import social.nickrest.util.FileUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 @Getter
@@ -27,6 +30,12 @@ public class SliceServer {
 
     private final List<Connection> connections = new ArrayList<>();
     private final List<Function<Connection, Boolean>> connectionListeners = new ArrayList<>();
+
+    // there has to be a better way to do this instead of making 4 of these motherfuckers
+    private final HashMap<String, Function<HTTPRequest, HTTPResponse>> get = new HashMap<>();
+    private final HashMap<String, Function<HTTPRequest, HTTPResponse>> post = new HashMap<>();
+    private final HashMap<String, Function<HTTPRequest, HTTPResponse>> put = new HashMap<>();
+    private final HashMap<String, Function<HTTPRequest, HTTPResponse>> delete = new HashMap<>();
 
     private ServerSocket serverSocket;
 
@@ -63,6 +72,43 @@ public class SliceServer {
         connectionListeners.add(function);
     }
 
+    public void get(String path, Function<HTTPRequest, HTTPResponse> callback) { request(RequestType.GET, path, callback); }
+    public void post(String path, Function<HTTPRequest, HTTPResponse> callback) { request(RequestType.POST, path, callback); }
+    public void put(String path, Function<HTTPRequest, HTTPResponse> callback) { request(RequestType.PUT, path, callback); }
+    public void delete(String path, Function<HTTPRequest, HTTPResponse> callback) { request(RequestType.DELETE, path, callback); }
+
+    public HTTPResponse get(String path) { return respond("GET", new HTTPRequest(path, null, null, null, null)); }
+    public HTTPResponse post(String path) { return respond("POST", new HTTPRequest(path, null, null, null, null)); }
+    public HTTPResponse put(String path) { return respond("PUT", new HTTPRequest(path, null, null, null, null)); }
+    public HTTPResponse delete(String path) { return respond("DELETE", new HTTPRequest(path, null, null, null, null)); }
+
+    public void request(RequestType type, String path, Function<HTTPRequest, HTTPResponse> callback) {
+        switch (type) {
+            case GET:
+                get.put(path, callback);
+                break;
+            case POST:
+                post.put(path, callback);
+                break;
+            case PUT:
+                put.put(path, callback);
+                break;
+            case DELETE:
+                delete.put(path, callback);
+                break;
+        }
+    }
+
+    public HTTPResponse respond(String type, HTTPRequest request) {
+        return switch (type) {
+            case "GET" -> get.get(request.getPath()) != null ? get.get(request.getPath()).apply(request) : null;
+            case "POST" -> post.get(request.getPath()) != null ? post.get(request.getPath()).apply(request) : null;
+            case "PUT" -> put.get(request.getPath()) != null ? put.get(request.getPath()).apply(request) : null;
+            case "DELETE" -> delete.get(request.getPath()) != null ? delete.get(request.getPath()).apply(request) : null;
+            default -> null;
+        };
+    }
+
     private Connection getConnection(Socket socket) throws IOException {
         Connection connection = new Connection(this, socket, socket.getInputStream(), socket.getOutputStream(), connections.size() + 1);
 
@@ -91,4 +137,5 @@ public class SliceServer {
     public void emit(String message, Object... args) {
         connections.stream().filter(Objects::nonNull).forEach(connection -> connection.emit(message, args));
     }
+
 }
