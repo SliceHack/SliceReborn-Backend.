@@ -41,15 +41,15 @@ public class Main {
         SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
 
         // this will be done later but for now it just will return 404
-        server.get("/client.jar", (request) -> {
-            return HTTPResponse.create()
-                    .status(200)
-                    .body(new File("client.jar"))
-                    .build();
-        });
+        server.get("/client.jar", (request) -> HTTPResponse.create()
+                .status(200)
+                .type("application/java-archive")
+                .body(new File("client.jar"))
+                .build());
 
         server.get("/", (request) -> HTTPResponse.create()
                 .status(200)
+                .type("text/html")
                 .body("<h1>Yes, this is the web api now just move along and pretend like you didn't see anything</h1>".getBytes())
                 .build());
 

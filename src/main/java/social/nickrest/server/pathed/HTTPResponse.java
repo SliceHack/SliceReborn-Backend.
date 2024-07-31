@@ -15,9 +15,15 @@ public class HTTPResponse {
     private int statusCode;
     private byte[] returnBody;
     private boolean json;
+    private String type;
 
     public static HTTPResponse create() {
         return new HTTPResponse();
+    }
+
+    public HTTPResponse type(String type) {
+        this.type = type;
+        return this;
     }
 
     public HTTPResponse status(int statusCode) {

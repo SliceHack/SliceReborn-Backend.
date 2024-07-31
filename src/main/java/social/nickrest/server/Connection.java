@@ -146,24 +146,7 @@ public class Connection implements Runnable {
                         HTTPStatus statusType = HTTPStatus.fromCode(statusCode);
 
                         outputStream.write(("HTTP/1.1 " + statusCode + " " + statusType + "\n").getBytes());
-                        if(response.isJson()) {
-                            outputStream.write("Content-Type: application/json\n".getBytes());
-                        } else if (path.endsWith(".css")) {
-                            outputStream.write("Content-Type: text/css; charset=UTF-8\n".getBytes());
-                        } else if(path.endsWith(".js")) {
-                            outputStream.write("Content-Type: text/javascript; charset=UTF-8\n".getBytes());
-                        } else if(path.endsWith(".png")) {
-                            outputStream.write("Content-Type: image/png\n".getBytes());
-                        } else if(path.endsWith(".jpg") || path.endsWith(".jpeg")) {
-                            outputStream.write("Content-Type: image/jpeg\n".getBytes());
-                        } else if(path.endsWith(".gif")) {
-                            outputStream.write("Content-Type: image/gif\n".getBytes());
-                        } else if(path.endsWith(".html") || !path.contains(".")) {
-                            outputStream.write("Content-Type: text/html; charset=UTF-8\n".getBytes());
-                        } else {
-                            outputStream.write("Content-Type: application/octet-stream\n".getBytes());
-                        }
-
+                        outputStream.write(("Content-Type: " + response.getType() + "\n").getBytes());
                         outputStream.write("\n".getBytes());
                         outputStream.write(response.getReturnBody());
                         outputStream.flush();
