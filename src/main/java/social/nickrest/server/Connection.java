@@ -94,7 +94,6 @@ public class Connection implements Runnable {
 
         call("connect", connect);
         while (connectedSocket.isConnected()) {
-
             try {
                 byte[] buffer = new byte[1024];
 
@@ -102,8 +101,6 @@ public class Connection implements Runnable {
                     boolean browserLikeRequest = false;
                     int read = inputStream.read(buffer);
 
-                    outputStream.write("HTTP/1.1 200 OK\\nContent-Type: text/html; charset=UTF-8".getBytes());
-                    outputStream.write("<html><body><h1>200 OK</h1></body></html>".getBytes());
                     String message = new String(buffer, 0, read);
                     String[] requestTypes = new String[]{
                             "GET", "POST",
@@ -115,6 +112,10 @@ public class Connection implements Runnable {
 
                     if (Arrays.stream(requestTypes).anyMatch(message::startsWith)) {
                         browserLikeRequest = true;
+
+                        outputStream.write("HTTP/1.1 200 OK\\nContent-Type: text/html; charset=UTF-8".getBytes());
+                        outputStream.write("<html><body><h1>200 OK</h1></body></html>".getBytes());
+                        // this will begin the connection between the browser and the server
 
                         String header = message.split("\n")[0];
                         boolean isRoot = header.split(" ").length == 2;
