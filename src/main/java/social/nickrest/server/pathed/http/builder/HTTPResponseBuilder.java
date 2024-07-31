@@ -1,8 +1,7 @@
-package social.nickrest.server.pathed;
+package social.nickrest.server.pathed.http.builder;
 
 import com.google.gson.JsonObject;
-import lombok.Getter;
-import lombok.Setter;
+import social.nickrest.server.pathed.http.HTTPResponse;
 
 import java.io.File;
 import java.io.FileReader;
@@ -10,33 +9,26 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter @Setter
-public class HTTPResponse {
-    private int statusCode;
-    private byte[] returnBody;
-    private boolean json;
-    private String type;
+public  class HTTPResponseBuilder {
 
-    public static HTTPResponse create() {
-        return new HTTPResponse();
-    }
+    private HTTPResponse build;
 
-    public HTTPResponse type(String type) {
-        this.type = type;
+    public HTTPResponseBuilder type(String type) {
+        build.setType(type);
         return this;
     }
 
-    public HTTPResponse status(int statusCode) {
-        this.statusCode = statusCode;
+    public HTTPResponseBuilder status(int statusCode) {
+        build.setStatusCode(statusCode);
         return this;
     }
 
-    public HTTPResponse body(byte[] returnBody) {
-        this.returnBody = returnBody;
+    public HTTPResponseBuilder body(byte[] returnBody) {
+        build.setReturnBody(returnBody);
         return this;
     }
 
-    public HTTPResponse body(File file) {
+    public HTTPResponseBuilder body(File file) {
         if(!file.exists()) {
             throw new RuntimeException("File does not exist");
         }
@@ -54,31 +46,30 @@ public class HTTPResponse {
             bytes[i] = buffer.get(i).byteValue();
         }
 
-        this.returnBody = bytes;
+        build.setReturnBody(bytes);
         return this;
     }
 
-    public HTTPResponse body(JsonObject returnBody) {
-        this.returnBody = returnBody.toString().getBytes();
+    public HTTPResponseBuilder body(JsonObject returnBody) {
+        build.setReturnBody(returnBody.toString().getBytes());
         return this;
     }
 
-    public HTTPResponse body(InputStream stream) {
+    public HTTPResponseBuilder body(InputStream stream) {
         try {
-            this.returnBody = stream.readAllBytes();
+            build.setReturnBody(stream.readAllBytes());
             return this;
         } catch (Exception e) {
             throw new RuntimeException("Failed to read input stream", e);
         }
     }
 
-    public HTTPResponse json(boolean json) {
-        this.json = json;
+    public HTTPResponseBuilder json(boolean json) {
+        build.setJson(json);
         return this;
     }
 
     public HTTPResponse build() {
-        return this;
+        return build;
     }
-
 }

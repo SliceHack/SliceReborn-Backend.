@@ -4,8 +4,8 @@ import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import social.nickrest.server.pathed.HTTPStatus;
-import social.nickrest.server.pathed.HTTPRequest;
-import social.nickrest.server.pathed.HTTPResponse;
+import social.nickrest.server.pathed.http.HTTPRequest;
+import social.nickrest.server.pathed.http.HTTPResponse;
 
 import java.io.*;
 import java.net.Socket;

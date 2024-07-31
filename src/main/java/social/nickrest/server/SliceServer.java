@@ -2,17 +2,13 @@ package social.nickrest.server;
 
 import com.google.gson.Gson;
 import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import social.nickrest.server.pathed.HTTPRequest;
-import social.nickrest.server.pathed.HTTPResponse;
+import social.nickrest.server.pathed.http.HTTPRequest;
+import social.nickrest.server.pathed.http.HTTPResponse;
 import social.nickrest.server.pathed.RequestType;
-import social.nickrest.util.FileUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;

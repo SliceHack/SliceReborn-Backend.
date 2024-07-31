@@ -1,4 +1,4 @@
-package social.nickrest.server.pathed;
+package social.nickrest.server.pathed.http;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
