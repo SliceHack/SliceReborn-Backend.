@@ -50,7 +50,7 @@ public class Main {
 
         server.get("/", (request) -> HTTPResponse.create()
                 .status(200)
-                .body("<h1>Yes, this is the web api now just move along and pretend like you didn't see anything/h1>".getBytes())
+                .body("<h1>Yes, this is the web api now just move along and pretend like you didn't see anything</h1>".getBytes())
                 .build());
 
         server.onConnection((connection) -> {
