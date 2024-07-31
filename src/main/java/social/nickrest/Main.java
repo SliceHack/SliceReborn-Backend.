@@ -1,6 +1,7 @@
 package social.nickrest;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -62,6 +63,10 @@ public class Main {
                     logger.info("User logged in as {} ({}) with ID {}", globalName, username, id);
                     data.set(object);
                     users.add(object);
+
+                    JsonObject users = new JsonObject();
+                    users.add("users", toJsonArray(Main.getUsers()));
+                    server.emit("updateList", users);
                     return true;
                 }
 
@@ -73,6 +78,10 @@ public class Main {
                 if(!data.get().isEmpty()) {
                     logger.info("User {} ({}) disconnected", data.get().get("globalName"), data.get().get("username"));
                     users.remove(data.get());
+
+                    JsonObject users = new JsonObject();
+                    users.add("users", toJsonArray(Main.getUsers()));
+                    server.emit("updateList", users);
                     return true;
                 }
 
@@ -163,5 +172,11 @@ public class Main {
             }
         }
         return map;
+    }
+
+    public static JsonArray toJsonArray(List<JsonObject> list) {
+        JsonArray array = new JsonArray();
+        list.forEach(array::add);
+        return array;
     }
 }
