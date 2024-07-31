@@ -39,17 +39,24 @@ public class Main {
         new CommandManager(); // this will register console input and all the commands
         SliceServer server = new SliceServer(argMap.containsKey("port") ? Integer.parseInt(argMap.get("port")) : 8080);
 
-        server.get("/client.jar", (request) -> HTTPResponse.builder()
-                .status(200)
-                .type("application/java-archive")
-                .body(new File("client.jar"))
-                .build());
+        File downloadFolder = new File("download");
 
-        server.get("/libraries/libraries.zip", (request) -> HTTPResponse.builder()
-                .status(200)
-                .type("application/zip")
-                .body(new File("libraries.zip"))
-                .build());
+        if(downloadFolder.exists()) {
+            File[] files = downloadFolder.listFiles();
+
+            if (files != null) {
+                for (File file : files) {
+
+                    if (file.isDirectory()) continue;
+
+                    server.get(String.format("/download/%s", file.getName()), (request) -> HTTPResponse.builder()
+                            .status(200)
+                            .type("application/" + file.getName().substring(file.getName().lastIndexOf(".") + 1).toLowerCase())
+                            .body(file)
+                            .build());
+                }
+            }
+        }
 
         server.get("/", (request) -> HTTPResponse.builder()
                 .status(200)
