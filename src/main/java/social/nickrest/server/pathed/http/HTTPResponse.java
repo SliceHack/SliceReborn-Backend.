@@ -6,7 +6,7 @@ import social.nickrest.server.pathed.http.builder.HTTPResponseBuilder;
 
 @Getter @Setter
 public class HTTPResponse {
-    private int statusCode;
+    private int statusCode = -1;
     private byte[] returnBody;
     private boolean json;
     private String type;

@@ -145,6 +145,14 @@ public class Connection implements Runnable {
                         int statusCode = response.getStatusCode();
                         HTTPStatus statusType = HTTPStatus.fromCode(statusCode);
 
+                        if(response.getType() == null) {
+                            throw new IllegalStateException("please call .type() on the response object otherwise the browser will not know what to do with the response");
+                        }
+
+                        if(statusCode == -1) {
+                            throw new IllegalStateException("please call .status() on the response object otherwise the browser will not know how the server received the request");
+                        }
+
                         outputStream.write(("HTTP/1.1 " + statusCode + " " + statusType + "\n").getBytes());
                         outputStream.write(("Content-Type: " + response.getType() + "\n").getBytes());
                         outputStream.write("\n".getBytes());
