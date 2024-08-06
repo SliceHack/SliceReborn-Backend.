@@ -110,12 +110,14 @@ public class Connection implements Runnable {
                             "TRACE"
                     };
 
-                    if (Arrays.stream(requestTypes).anyMatch(message::startsWith)) {
+                    if (Arrays.stream(requestTypes).anyMatch(message::startsWith) && message.contains("User-Agent")) {
                         browserLikeRequest = true;
+
 
                         outputStream.write("HTTP/1.1 200 OK\\nContent-Type: text/html; charset=UTF-8".getBytes());
                         outputStream.write("<html><body><h1>200 OK</h1></body></html>".getBytes());
                         // this will begin the connection between the browser and the server
+
 
                         String header = message.split("\n")[0];
                         boolean isRoot = header.split(" ").length == 2;
